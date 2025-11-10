@@ -1,0 +1,12 @@
+Regra Fila
+
+- encaminha para espera até a hora da venda
+	- insere numa fila, guarda cookie?
+	- dispara job de atendimento na hora agendada
+- atende por ordem chegada
+	- altera status do token (AGUARDANDO -> EM_ATENDIMENTO)
+	- estipula prazo para fim do atendimento
+- máximo de 5 ingressos por pessoa enquanto durar o estoque
+	- devolve ingressos disponíveis
+- tempo máximo para concluir a transação de 15 minutos
+	- valida horário: desfaz transação ou procede para meio de pagamento
