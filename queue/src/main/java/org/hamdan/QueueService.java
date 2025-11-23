@@ -19,6 +19,8 @@ public class QueueService {
 
     private final Queue<Customer> queue = new LinkedList<>();
 
+    private Customer currentCustomer;
+
     @Inject
     @RestClient
     TokentClient tokentClient;
@@ -35,6 +37,7 @@ public class QueueService {
 
     public void serveNext() {
         Customer customer = queue.poll();
+        currentCustomer = customer;
 
         if (customer == null)
             return;
@@ -87,6 +90,9 @@ public class QueueService {
                 .data(new QueueResponseDto(String.format("Aguarde. Posição na fila: %d.", queue.size()), customer.getId(), EQueueStatus.AWAITING).toJson())
                 .build();
         eventSink.send(waitingMessage);
+
+        if (queue.peek().equals(customer) && currentCustomer == null)
+            serveNext();
     }
 
 }
