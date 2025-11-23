@@ -6,6 +6,7 @@ public class Customer {
 
     private final String id;
     private final SseEventSink eventSink;
+    private String token;
 
     public Customer(String id, SseEventSink eventSink) {
         this.id = id;

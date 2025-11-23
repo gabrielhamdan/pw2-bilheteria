@@ -8,6 +8,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="ticket" />
         <module name="queue" />
+        <module name="commons" />
         <module name="token" />
       </profile>
     </annotationProcessing>

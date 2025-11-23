@@ -1,6 +1,8 @@
 package org.hamdan;
 
+import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -25,8 +27,11 @@ public class TicketService {
     @RestClient
     QueueClient queueClient;
 
+    @Inject
+    JwtBlacklist blacklist;
+
     @Transactional
-    public void init() {
+    public void init(@Observes StartupEvent ev) {
         final Double price = 180.0;
         for (char c = 'A'; c <= 'Z'; c++)
             for (int i = 0; i < 10; i++) {
@@ -48,7 +53,7 @@ public class TicketService {
     }
 
     @Transactional
-    public PurchaseResponse purchaseTickets(PurchaseDto purchaseDto) {
+    public PurchaseResponse purchaseTickets(String token, PurchaseDto purchaseDto) {
         if (purchaseDto.tickets().size() > MAX_TICKETS)
             return new PurchaseResponse(String.format("Número máximo (%d) de ingressos por cliente excedido.", MAX_TICKETS));
 
@@ -61,8 +66,9 @@ public class TicketService {
             tickets.add(ticket);
         }
 
+        blacklist.revoke(token);
+
         queueClient.serveNext();
-        // TODO revoke JWT
 
         return new PurchaseResponse("Compra efetuada com sucesso.", tickets);
     }

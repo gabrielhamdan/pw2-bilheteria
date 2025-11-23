@@ -6,6 +6,7 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.sse.OutboundSseEvent;
 import jakarta.ws.rs.sse.Sse;
 import jakarta.ws.rs.sse.SseEventSink;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.hamdan.client.TokentClient;
 
@@ -18,8 +19,11 @@ import java.util.concurrent.*;
 public class QueueService {
 
     private final Queue<Customer> queue = new LinkedList<>();
+    private final int TOKEN_DURATION = 15;
 
     private Customer currentCustomer;
+    private ScheduledFuture<?> currentTask;
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     @Inject
     @RestClient
@@ -28,19 +32,17 @@ public class QueueService {
     @Inject
     Sse sse;
 
-    @Scheduled(cron = "0 10 21 * * ?")
-    public void serveFirst() {
-        for (int i = 1; i < 50 / 5; i++) { // TODO restantes / máx por cliente
-            serveNext();
-        }
-    }
+    @ConfigProperty(name = "auth.hmac.secret")
+    String secret;
 
+    @Scheduled(cron = "0 10 21 * * ?")
     public void serveNext() {
         Customer customer = queue.poll();
-        currentCustomer = customer;
 
         if (customer == null)
             return;
+
+        String assinatura = HmacUtil.hmacSha256(customer.getId(), secret);
 
         OutboundSseEvent event = sse.newEventBuilder()
                 .name(EQueueStatus.PROCESSING.name())
@@ -48,7 +50,7 @@ public class QueueService {
                         "Em atendimento.",
                         customer.getId(),
                         EQueueStatus.PROCESSING,
-                        tokentClient.generateToken(customer.getId()).token()
+                        tokentClient.generateToken(customer.getId(), assinatura).token()
                 ).toJson())
                 .build();
 
@@ -59,9 +61,9 @@ public class QueueService {
             customer.getEventSink().close();
         });
 
-        // TODO logs
         try {
             future.get(60, TimeUnit.SECONDS); // ok
+            setCurrentCustomer(customer);
         } catch (TimeoutException e) {
             future.cancel(true); // timeout
         } catch (InterruptedException | ExecutionException e) {
@@ -93,6 +95,24 @@ public class QueueService {
 
         if (queue.peek().equals(customer) && currentCustomer == null)
             serveNext();
+    }
+
+    private synchronized void setCurrentCustomer(Customer customer) {
+        this.currentCustomer = customer;
+
+        if (currentTask != null) {
+            currentTask.cancel(false);
+        }
+
+        if (customer != null) {
+            currentTask = scheduler.schedule(() -> {
+                onCustomerTimeExpired(customer);
+            }, TOKEN_DURATION, TimeUnit.MINUTES);
+        }
+    }
+
+    private void onCustomerTimeExpired(Customer customer) {
+        serveNext();
     }
 
 }

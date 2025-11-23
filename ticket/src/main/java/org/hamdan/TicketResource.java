@@ -23,17 +23,11 @@ public class TicketResource {
         return ticketService.listTickets(available);
     }
 
-    @GET
-    @Path("/init")
-    public void init() {
-        ticketService.init();
-    }
-
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public PurchaseResponse purchaseTickets(PurchaseDto purchaseDto) {
-        return ticketService.purchaseTickets(purchaseDto);
+    public PurchaseResponse purchaseTickets(@HeaderParam("Authorization") String token, PurchaseDto purchaseDto) {
+        return ticketService.purchaseTickets(token, purchaseDto);
     }
 
 }

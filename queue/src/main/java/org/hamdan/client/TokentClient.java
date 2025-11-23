@@ -1,6 +1,7 @@
 package org.hamdan.client;
 
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
@@ -10,6 +11,6 @@ public interface TokentClient {
 
     @GET
     @Path("/jwt/{id}")
-    TokenDto generateToken(@PathParam("id") String id);
+    TokenDto generateToken(@PathParam("id") String id, @HeaderParam("X-Signature") String signature);
 
 }

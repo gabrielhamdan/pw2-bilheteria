@@ -59,6 +59,11 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-rest-client</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.hamdan</groupId>
+            <artifactId>commons</artifactId>
+            <version>1.0.0</version>
+        </dependency>
     </dependencies>
 
     <build>
