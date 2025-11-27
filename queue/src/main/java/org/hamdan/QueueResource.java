@@ -23,14 +23,7 @@ public class QueueResource {
     @GET
     @Path("/next")
     public void serveNext() {
-        service.serveNext();
-    }
-
-    // HACK
-    @GET
-    @Path("/simnext")
-    public void simNext() {
-        service.serveNext();
+        service.dismissCurrentCustomer();
     }
 
 }

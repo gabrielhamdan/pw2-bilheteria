@@ -35,6 +35,11 @@ public class QueueService {
     @ConfigProperty(name = "auth.hmac.secret")
     String secret;
 
+    public void dismissCurrentCustomer() {
+        currentCustomer = null;
+        serveNext();
+    }
+
     @Scheduled(cron = "0 10 21 * * ?")
     public void serveNext() {
         Customer customer = queue.poll();
